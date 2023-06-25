@@ -31,6 +31,7 @@ contract FlashLoanReceiver {
 
         _executeActionDuringFlashLoan();
 
+        // 本金 + 手續費 還錢給 NaiveReceiverLenderPool
         // Return funds to pool
         pool.sendValue(amountToBeRepaid);
     }

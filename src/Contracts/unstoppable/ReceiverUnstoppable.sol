@@ -25,8 +25,8 @@ contract ReceiverUnstoppable {
 
     /// @dev Pool will call this function during the flash loan
     function receiveTokens(address tokenAddress, uint256 amount) external {
-        if (msg.sender != address(pool)) revert SenderMustBePool();
-        IERC20(tokenAddress).safeTransfer(msg.sender, amount);
+        if (msg.sender != address(pool)) revert SenderMustBePool(); // UnstoppableLender contract 回呼此 function
+        IERC20(tokenAddress).safeTransfer(msg.sender, amount); // 還錢給 UnstoppableLender
     }
 
     function executeFlashLoan(uint256 amount) external {

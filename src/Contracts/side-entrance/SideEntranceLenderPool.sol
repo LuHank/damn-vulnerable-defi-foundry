@@ -2,6 +2,7 @@
 pragma solidity 0.8.17;
 
 import {Address} from "openzeppelin-contracts/utils/Address.sol";
+import "forge-std/console.sol";
 
 interface IFlashLoanEtherReceiver {
     function execute() external payable;
@@ -26,6 +27,9 @@ contract SideEntranceLenderPool {
     function withdraw() external {
         uint256 amountToWithdraw = balances[msg.sender];
         balances[msg.sender] = 0;
+        // address.sendValue 取代 ERC20.transfer
+        // 此合約轉錢給 msg.sender
+        console.log("msg.sender: ", msg.sender);
         payable(msg.sender).sendValue(amountToWithdraw);
     }
 
